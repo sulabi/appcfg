@@ -49,20 +49,20 @@ impl Config {
         }
 
         Ok(Self {
-            file: PathBuf::from("config.toml"),
+            file: config_path.join(PathBuf::from("config.toml")),
             path: config_path,
         })
     }
 
     /// Changes the current configuration file
     pub fn set_file(&mut self, file: impl Into<PathBuf>) -> &mut Self {
-        self.file = file.into();
+        self.file = self.path.join(file.into());
         self
     }
 
     /// Builder pattern to set the current configuration file
     pub fn with_file(mut self, file: impl Into<PathBuf>) -> Self {
-        self.file = file.into();
+        self.file = self.path.join(file.into());
         self
     }
 
