@@ -74,6 +74,20 @@ impl Config {
         Ok(toml::from_str::<T>(&content)?)
     }
 
+    pub fn read_or_default<T: Serialize + DeserializeOwned + Default>(
+        &self,
+    ) -> Result<T, ConfigError> {
+        match self.read::<T>() {
+            Ok(data) => Ok(data),
+            Err(ConfigError::Io { source, .. }) if source.kind() == io::ErrorKind::NotFound => {
+                let default_conf = T::default();
+                self.write(&default_conf)?;
+                Ok(default_conf)
+            }
+            Err(err) => Err(err),
+        }
+    }
+
     pub fn read_file<T: DeserializeOwned>(
         &self,
         file: impl Into<PathBuf>,
