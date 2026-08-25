@@ -12,16 +12,21 @@ mod shared;
 pub use error::*;
 pub use shared::*;
 
+/// Target directory of the configuration files
 pub enum ConfigDirectory {
+    /// System default configuration directory (`~/.config/app_name`)
     #[cfg(feature = "system-dirs")]
     System(&'static str),
 
+    /// Custom file path
     Custom(PathBuf),
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    /// Filename of the current configuration file (default `config.toml`)
     pub file: PathBuf,
+    /// Directory that contains the configuration files
     pub path: PathBuf,
 }
 
@@ -49,31 +54,30 @@ impl Config {
         })
     }
 
+    /// Changes the current configuration file
     pub fn set_file(&mut self, file: impl Into<PathBuf>) -> &mut Self {
         self.file = file.into();
         self
     }
 
+    /// Builder pattern to set the current configuration file
     pub fn with_file(mut self, file: impl Into<PathBuf>) -> Self {
         self.file = file.into();
         self
     }
 
-    pub fn target_path(&self) -> PathBuf {
-        self.path.join(&self.file)
-    }
-
+    /// Reads and deserializes the configuration file into type `T`
     pub fn read<T: DeserializeOwned>(&self) -> Result<T, ConfigError> {
-        let file_path = self.target_path();
-
-        let content = fs::read_to_string(&file_path).map_err(|err| ConfigError::Io {
-            path: file_path,
+        let content = fs::read_to_string(&self.file).map_err(|err| ConfigError::Io {
+            path: self.file.clone(),
             source: err,
         })?;
 
         Ok(toml::from_str::<T>(&content)?)
     }
 
+    /// Reads and deserializes the configuration file into type `T`. If missing config is written
+    /// and returns `T::default()`
     pub fn read_or_default<T: Serialize + DeserializeOwned + Default>(
         &self,
     ) -> Result<T, ConfigError> {
@@ -88,17 +92,9 @@ impl Config {
         }
     }
 
-    pub fn read_file<T: DeserializeOwned>(
-        &self,
-        file: impl Into<PathBuf>,
-    ) -> Result<T, ConfigError> {
-        self.clone().with_file(file).read()
-    }
-
+    /// Serializes and writes data `T` to disk as pretty TOML file.
     pub fn write<T: Serialize>(&self, data: &T) -> Result<(), ConfigError> {
-        let file = self.target_path();
-
-        if let Some(parent) = file.parent()
+        if let Some(parent) = &self.file.parent()
             && !parent.exists()
         {
             fs::create_dir_all(parent).map_err(|err| ConfigError::Io {
@@ -108,14 +104,15 @@ impl Config {
         }
 
         let content = toml::to_string_pretty(data)?;
-        fs::write(&file, content).map_err(|err| ConfigError::Io {
-            path: file,
+        fs::write(&self.file, content).map_err(|err| ConfigError::Io {
+            path: self.file.clone(),
             source: err,
         })?;
 
         Ok(())
     }
 
+    /// Loads the config and stores it in a thread safe `SharedConfig`
     pub fn load_shared<T: Serialize + DeserializeOwned>(
         self,
     ) -> Result<SharedConfig<T>, ConfigError> {
@@ -127,6 +124,7 @@ impl Config {
         })
     }
 
+    /// Loads the config, writes and returns `T::default()` if missing, and stores it in a thread safe `SharedConfig`
     pub fn load_shared_or_default<T: Serialize + DeserializeOwned + Default>(
         self,
     ) -> Result<SharedConfig<T>, ConfigError> {

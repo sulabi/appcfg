@@ -1,9 +1,8 @@
+use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::ModifyKind};
 use std::{
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
-
 };
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::ModifyKind};
 
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -11,11 +10,20 @@ use crate::*;
 
 type ReloadCallback<T> = Arc<dyn Fn(&T) + Send + Sync>;
 
-#[derive(Clone)]
 pub struct SharedConfig<T> {
     pub data: Arc<RwLock<T>>,
     pub storage: Arc<Config>,
     pub on_reload: Option<ReloadCallback<T>>,
+}
+
+impl<T> Clone for SharedConfig<T> {
+    fn clone(&self) -> Self {
+        Self {
+            data: Arc::clone(&self.data),
+            storage: Arc::clone(&self.storage),
+            on_reload: self.on_reload.clone(),
+        }
+    }
 }
 
 impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
@@ -58,7 +66,8 @@ impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
 #[cfg(feature = "watcher")]
 impl<T: Serialize + DeserializeOwned + Send + Sync + 'static> SharedConfig<T> {
     pub fn spawn_watcher(self) -> Result<RecommendedWatcher, ConfigError> {
-        let target = self.storage.target_path();
+        let path = &self.storage.file;
+        let shared = self.clone();
 
         let mut watcher = notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
             if let Ok(event) = res
@@ -69,18 +78,18 @@ impl<T: Serialize + DeserializeOwned + Send + Sync + 'static> SharedConfig<T> {
             // ModifyKind::Data fires twice sometimes, so i'll track with ModifyKind::Metadata
             // instead
             {
-                let _ = self.reload();
+                let _ = shared.reload();
             }
         })
         .map_err(|e| ConfigError::Io {
-            path: target.clone(),
+            path: path.to_path_buf(),
             source: io::Error::other(e.to_string()),
         })?;
 
         watcher
-            .watch(&target, RecursiveMode::NonRecursive)
+            .watch(path, RecursiveMode::NonRecursive)
             .map_err(|e| ConfigError::Io {
-                path: target,
+                path: path.to_path_buf(),
                 source: io::Error::other(e.to_string()),
             })?;
 
