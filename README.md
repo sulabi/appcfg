@@ -1,6 +1,6 @@
-# Config Watcher
+# App Config
 
-Simple config reader / writer.
+Simple app config reader / writer.
 
 ## Example
 
