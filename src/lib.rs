@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use serde::{Serialize, de::DeserializeOwned};
+pub use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 mod error;
 mod shared;
