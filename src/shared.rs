@@ -1,3 +1,4 @@
+#[cfg(feature = "watcher")]
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::ModifyKind};
 use std::{
     ops::{Deref, DerefMut},
