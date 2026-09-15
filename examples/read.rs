@@ -16,7 +16,8 @@ impl Default for AppSettings {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new(ConfigDirectory::Custom("./appconf".into()))?;
+    let dir = tempfile::tempdir()?;
+    let config = Config::new(ConfigDirectory::Custom(dir.path().to_path_buf()))?;
     let settings = config.read_or_default::<AppSettings>()?;
 
     if settings.verbose {
