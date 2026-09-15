@@ -1,5 +1,10 @@
 # configfs
 
+[![Build Status](https://github.com/sulabi/configfs/actions/workflows/rust.yml/badge.svg)](https://github.com/sulabi/configfs/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/configfs.svg)](https://crates.io/crates/configfs)
+[![Documentation](https://docs.rs/configfs/badge.svg)](https://docs.rs/configfs)
+[![License](https://img.shields.io/crates/l/configfs.svg)](https://crates.io/crates/configfs)
+
 A small lightweight filesystem config manager
 `configfs` provides an api to load, deserialize and write
 config files for your application.
@@ -90,7 +95,8 @@ let config = Config::new(ConfigDirectory::System("app"))?;
 ### watcher
 Enables support to watch files as they reload.
 
-An example of this to see file reloading can be seen in examples/watcher.rs.
+An example of this to see file reloading can be seen in
+[`examples/watcher.rs`](examples/watcher.rs).
 
 ## License
 
