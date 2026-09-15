@@ -94,6 +94,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(dir: ConfigDirectory) -> Result<Self, ConfigError> {
+        #[allow(clippy::infallible_destructuring_match)]
         let config_path = match dir {
             #[cfg(feature = "system-dirs")]
             ConfigDirectory::System(app_name) => dirs::config_dir()
@@ -182,6 +183,8 @@ impl Config {
         Ok(SharedConfig {
             data: Arc::new(RwLock::new(data)),
             storage: Arc::new(self),
+
+            #[cfg(feature = "watcher")]
             on_reload: None,
         })
     }
@@ -203,6 +206,8 @@ impl Config {
         Ok(SharedConfig {
             data: Arc::new(RwLock::new(data)),
             storage: Arc::new(self),
+
+            #[cfg(feature = "watcher")]
             on_reload: None,
         })
     }

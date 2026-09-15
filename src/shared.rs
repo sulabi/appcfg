@@ -1,19 +1,23 @@
+use crate::{Config, ConfigError};
+
 #[cfg(feature = "watcher")]
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, event::ModifyKind};
+use serde::{Serialize, de::DeserializeOwned};
+#[allow(unused_imports)]
 use std::{
+    io,
     ops::{Deref, DerefMut},
     sync::{Arc, RwLock},
 };
 
-use serde::{Serialize, de::DeserializeOwned};
-
-use crate::*;
-
+#[cfg(feature = "watcher")]
 type ReloadCallback<T> = Arc<dyn Fn(&T) + Send + Sync>;
 
 pub struct SharedConfig<T> {
     pub data: Arc<RwLock<T>>,
     pub storage: Arc<Config>,
+
+    #[cfg(feature = "watcher")]
     pub on_reload: Option<ReloadCallback<T>>,
 }
 
@@ -22,6 +26,8 @@ impl<T> Clone for SharedConfig<T> {
         Self {
             data: Arc::clone(&self.data),
             storage: Arc::clone(&self.storage),
+
+            #[cfg(feature = "watcher")]
             on_reload: self.on_reload.clone(),
         }
     }
@@ -45,6 +51,7 @@ impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
         self.storage.write(guard.deref())
     }
 
+    #[cfg(feature = "watcher")]
     pub fn reload(&self) -> Result<(), ConfigError> {
         let fresh_data: T = self.storage.read()?;
         {
@@ -58,6 +65,7 @@ impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
         Ok(())
     }
 
+    #[cfg(feature = "watcher")]
     pub fn on_reload(mut self, f: impl Fn(&T) + Send + Sync + 'static) -> Self {
         self.on_reload = Some(Arc::new(f));
         self
