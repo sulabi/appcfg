@@ -7,10 +7,9 @@ edition = "2024"
 dirs = { version = "6.0.0", optional = true }
 notify = { version = "8.2.0", optional = true }
 serde = { version = "1.0.229", features = ["derive"] }
-tempfile = "3.27.0"
 thiserror = "2.0.20"
 toml = "1.1.4"
 
 [features]
-watcher = ["dep:notify"]
 system-dirs = ["dep:dirs"]
+watcher = ["dep:notify"]

@@ -1,43 +1,61 @@
-# App Config
+# appcfg
 
-Simple app config reader / writer.
+A small lightweight filesystem config manager
+`appcfg` provides an api to load, deserialize and write
+config files for your application.
+This currently only supports the TOML format, however I shall
+introduce more formats in the future.
 
-## Example
+## Usage
 
 ```rust
-use config::{Config, ConfigDirectory};
+use appcfg::{Config, ConfigDirectory};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
-struct AppConfig {
-    age: u8,
-    server_name: String,
+#[derive(Debug, Serialize, Deserialize)]
+struct AppSettings {
+    port: u16,
+    verbose: bool
 }
-
-impl Default for AppConfig {
+impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            age: 1,
-            server_name: "app_1".to_string(),
+            port: 9000,
+            verbose: true
         }
     }
 }
 
-pub fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let disk_config = Config::new(ConfigDirectory::Custom(PathBuf::from("./custom file")))?
-        .with_file("app.toml");
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config::new(ConfigDirectory::Custom("./appconf".into()))?;
+    let settings = config.read_or_default::<AppSettings>()?;
 
-    let shared = disk_config
-        .load_shared_or_default::<AppConfig>()?
-        .on_reload(|conf| println!("new age: {}", conf.age));
+    if settings.verbose {
+        println!("using port: {}", settings.port);
+    }
 
-    let _watcher = shared.clone().spawn_watcher()?;
+    Ok(())
+}
+```
 
-    println!("Watching for changes on app.toml");
+## Writing Config
 
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)?;
+```rust
+use appcfg::{Config, ConfigDirectory};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct AppSettings {
+    username: String
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config::new(ConfigDirectory::Custom("./appconf".into()))?;
+    let settings = AppSettings {
+        username: "jimmy".into()
+    };
+
+    config.write(&settings)?;
 
     Ok(())
 }
