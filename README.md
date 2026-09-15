@@ -3,10 +3,20 @@
 A small lightweight filesystem config manager
 `configfs` provides an api to load, deserialize and write
 config files for your application.
-This currently only supports the TOML format, however I shall
-introduce more formats in the future.
+This currently only supports the TOML format, however I shall introduce more formats in the future.
+
+## Installation
+
+Add `configfs` and `serde` to your `Cargo.toml`
+```toml
+[dependencies]
+configfs = "0.1"
+serde = { version = "1", features = ["derive"] }
+```
 
 ## Usage
+
+### Reading Config
 
 ```rust
 use configfs::{Config, ConfigDirectory};
@@ -38,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Writing Config
+### Writing Config
 
 ```rust
 use configfs::{Config, ConfigDirectory};
@@ -60,3 +70,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Features
+
+### `system-dirs`
+Enables support to access the users local config directory, this is fetched using the `dirs` crate.
+
+```toml
+[dependencies]
+configfs = { version = "0.1", features = ["system-dirs"] }
+```
+
+An example that will save the config folder `app` in `~/.config/`.
+
+```rust
+let config = Config::new(ConfigDirectory::System("app"))?;
+```
+
+### watcher
+Enables support to watch files as they reload.
+
+An example of this to see file reloading can be seen in examples/watcher.rs.
+
+## License
+
+Licensed under either of:
+
+- MIT License
+- Apache License, Version 2.0
