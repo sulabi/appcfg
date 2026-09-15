@@ -187,7 +187,7 @@ impl Config {
             storage: Arc::new(self),
 
             #[cfg(feature = "watcher")]
-            on_reload: None,
+            on_reload: Arc::new(RwLock::new(None)),
         })
     }
 
@@ -210,7 +210,7 @@ impl Config {
             storage: Arc::new(self),
 
             #[cfg(feature = "watcher")]
-            on_reload: None,
+            on_reload: Arc::new(RwLock::new(None)),
         })
     }
 }

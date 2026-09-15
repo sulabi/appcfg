@@ -18,7 +18,7 @@ pub struct SharedConfig<T> {
     pub storage: Arc<Config>,
 
     #[cfg(feature = "watcher")]
-    pub on_reload: Option<ReloadCallback<T>>,
+    pub on_reload: Arc<RwLock<Option<ReloadCallback<T>>>>,
 }
 
 impl<T> Clone for SharedConfig<T> {
@@ -28,7 +28,7 @@ impl<T> Clone for SharedConfig<T> {
             storage: Arc::clone(&self.storage),
 
             #[cfg(feature = "watcher")]
-            on_reload: self.on_reload.clone(),
+            on_reload: Arc::clone(&self.on_reload),
         }
     }
 }
@@ -58,7 +58,14 @@ impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
             let mut guard = self.data.write().map_err(|_| ConfigError::LockPoisoned)?;
             *guard = fresh_data;
         }
-        if let Some(ref callback) = self.on_reload {
+
+        let callback = self
+            .on_reload
+            .write()
+            .map_err(|_| ConfigError::LockPoisoned)?
+            .clone();
+
+        if let Some(callback) = callback {
             self.get(|d| callback(d))?;
         }
 
@@ -66,15 +73,19 @@ impl<T: Serialize + DeserializeOwned> SharedConfig<T> {
     }
 
     #[cfg(feature = "watcher")]
-    pub fn on_reload(mut self, f: impl Fn(&T) + Send + Sync + 'static) -> Self {
-        self.on_reload = Some(Arc::new(f));
-        self
+    pub fn on_reload(&mut self, f: impl Fn(&T) + Send + Sync + 'static) -> Result<(), ConfigError> {
+        let mut guard = self
+            .on_reload
+            .write()
+            .map_err(|_| ConfigError::LockPoisoned)?;
+        *guard = Some(Arc::new(f));
+        Ok(())
     }
 }
 
 #[cfg(feature = "watcher")]
 impl<T: Serialize + DeserializeOwned + Send + Sync + 'static> SharedConfig<T> {
-    pub fn spawn_watcher(self) -> Result<RecommendedWatcher, ConfigError> {
+    pub fn spawn_watcher(&self) -> Result<RecommendedWatcher, ConfigError> {
         let path = &self.storage.file;
         let shared = self.clone();
 
