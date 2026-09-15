@@ -1,4 +1,4 @@
-use appcfg::{Config, ConfigDirectory};
+use configfs::{Config, ConfigDirectory};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

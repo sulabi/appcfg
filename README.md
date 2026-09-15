@@ -1,7 +1,7 @@
-# appcfg
+# configfs
 
 A small lightweight filesystem config manager
-`appcfg` provides an api to load, deserialize and write
+`configfs` provides an api to load, deserialize and write
 config files for your application.
 This currently only supports the TOML format, however I shall
 introduce more formats in the future.
@@ -9,7 +9,7 @@ introduce more formats in the future.
 ## Usage
 
 ```rust
-use appcfg::{Config, ConfigDirectory};
+use configfs::{Config, ConfigDirectory};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Writing Config
 
 ```rust
-use appcfg::{Config, ConfigDirectory};
+use configfs::{Config, ConfigDirectory};
 use serde::Serialize;
 
 #[derive(Serialize)]

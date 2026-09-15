@@ -1,7 +1,10 @@
 [package]
-name = "appcfg"
+name = "configfs"
 version = "0.1.0"
 edition = "2024"
+description = "A simple application configuration manager"
+repository = "https://github.com/sulabi/configfs"
+readme = "README.md"
 
 [dependencies]
 dirs = { version = "6.0.0", optional = true }
