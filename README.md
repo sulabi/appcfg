@@ -92,7 +92,7 @@ An example that will save the config folder `app` in `~/.config/`.
 let config = Config::new(ConfigDirectory::System("app"))?;
 ```
 
-### watcher
+### `watcher`
 Enables support to watch files as they reload.
 
 An example of this to see file reloading can be seen in
