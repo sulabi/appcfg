@@ -6,8 +6,9 @@ struct AppSettings {
     username: String,
 }
 
+// The following code will write the config into ~/.config/app/config.toml
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::new(ConfigDirectory::System("app"))?;
+    let config = Config::new(ConfigDirectory::System("app/config.toml"))?;
     let settings = AppSettings {
         username: "jimmy".into(),
     };

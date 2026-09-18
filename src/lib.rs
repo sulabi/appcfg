@@ -64,7 +64,7 @@
 
 use std::{
     fs, io,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
 
@@ -90,8 +90,6 @@ pub enum ConfigDirectory {
 pub struct Config {
     /// Filename of the current configuration file (default `config.toml`)
     pub file: PathBuf,
-    /// Directory that contains the configuration files
-    pub path: PathBuf,
 }
 
 impl Config {
@@ -106,28 +104,36 @@ impl Config {
             ConfigDirectory::Custom(config_path) => config_path,
         };
 
-        if !config_path.is_dir() {
-            fs::create_dir_all(&config_path).map_err(|err| ConfigError::Io {
+        if !config_path.exists() && config_path.is_dir() {
+            fs::create_dir(&config_path).map_err(|e| ConfigError::Io {
                 path: config_path.clone(),
-                source: err,
+                source: e,
             })?;
         }
 
-        Ok(Self {
-            file: config_path.join(PathBuf::from("config.toml")),
-            path: config_path,
-        })
+        let config_file = if config_path.is_dir() {
+            config_path.join("config.toml")
+        } else {
+            config_path.clone()
+        };
+
+        Ok(Self { file: config_file })
+    }
+
+    /// Returns the parent of the file
+    pub fn parent(&self) -> Result<&Path, ConfigError> {
+        self.file.parent().ok_or(ConfigError::SystemConfigNotFound)
     }
 
     /// Changes the current configuration file
     pub fn set_file(&mut self, file: impl Into<PathBuf>) -> &mut Self {
-        self.file = self.path.join(file.into());
+        self.file = file.into();
         self
     }
 
     /// Builder pattern to set the current configuration file
     pub fn with_file(mut self, file: impl Into<PathBuf>) -> Self {
-        self.file = self.path.join(file.into());
+        self.file = file.into();
         self
     }
 
